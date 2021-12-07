@@ -2,14 +2,16 @@
 interface IProduct {
   category?: string
   price: string
-  stocked?: boolean
+  stocked: boolean
   name: string
 }
 
 type IProducts = IProduct[]
 
 interface IProductTableProps {
-  products: IProducts,
+  products: IProducts
+  filterText: string
+  inStockOnly: boolean
 }
 
 interface IProductCategoryRowProps {
@@ -26,20 +28,30 @@ function ProductCategoryRow(props: IProductCategoryRowProps) {
 }
 
 function ProductRow(props: IProduct) {
+  const name = props.stocked
+    ? props.name
+    : <span style={{color: "red"}}>{props.name}</span>
+
   return (
     <tr>
-      <td>{ props.name }</td>
+      <td>{ name }</td>
       <td>{ props.price }</td>
     </tr>
   )
 }
 
 export function ProductTable(props: IProductTableProps) {
-  const SportingGoods = props.products.filter(item => item.category === "Sporting Goods")
-  const Electronics = props.products.filter(item => item.category === "Electronics")
+  const products = props.products.filter(item => {
+    return item.name.toLowerCase().includes(props.filterText.toLowerCase()) && !(props.inStockOnly && !item.stocked)
+  })
 
-  const sportingGoods = SportingGoods.map(item => <ProductRow key={item.name} price={item.price} name={item.name}/>)
-  const electronics = Electronics.map(item => <ProductRow key={item.name} price={item.price} name={item.name}/>)
+  const SportingGoods = products.filter(item => item.category === "Sporting Goods")
+  const Electronics = products.filter(item => item.category === "Electronics")
+
+  const sportingGoods = SportingGoods.map(item => {
+    return <ProductRow key={item.name} stocked={item.stocked} price={item.price} name={item.name}/>
+  })
+  const electronics = Electronics.map(item => <ProductRow key={item.name} stocked={item.stocked} price={item.price} name={item.name}/>)
 
   return (
     <table>
@@ -58,8 +70,8 @@ export function ProductTable(props: IProductTableProps) {
 }
 
 interface ISearchBarProps {
-  onSearch: Function
-  onFilterInStock: Function
+  onFilterText: Function
+  onInStockOnly: Function
   inStockOnly: boolean
   filterText: string
 }
@@ -72,14 +84,14 @@ export function SearchBar(props: ISearchBarProps) {
           placeholder="Search..."
           type="text"
           value={props.filterText}
-          onChange={(e) => props.onSearch(e)}
+          onChange={(e) => props.onFilterText(e.target.value)}
         />
       </div>
       <label>
         <input
           type="checkbox"
           checked={props.inStockOnly}
-          onChange={(e) => props.onFilterInStock(e)}
+          onChange={(e) => props.onInStockOnly(e.target.checked)}
         />
         <span>Only show products in stock.</span>
       </label>
